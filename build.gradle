@@ -1,0 +1,27 @@
+apply plugin: 'java'
+apply plugin: 'maven'
+
+group = 'cn.trinea.android.view.autoscrollviewpager'
+version = '1.1.3-SNAPSHOT'
+
+description = 'Android Auto Scroll ViewPager'
+
+sourceCompatibility = 1.6
+targetCompatibility = 1.6
+
+configurations.all {
+}
+
+repositories {
+        
+     maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
+     maven { url "http://repo.maven.apache.org/maven2" }
+}
+dependencies {
+    compile group: 'com.google.android', name: 'support-v4', version:'r19'
+    compile(group: 'com.google.android', name: 'android', version:'4.0.1.2') {
+       /* This dependency was originally in the Maven provided scope, but the project was not of type war.
+       This behavior is not yet supported by Gradle, so this dependency has been converted to a compile dependency.
+       Please review and delete this closure when resolved. */
+    }
+}
