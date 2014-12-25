@@ -34,6 +34,8 @@ public class LoopCompatibleViewPager extends ViewPager {
     private static final ViewPositionComparator sPositionComparator = new ViewPositionComparator();
     InfiniteLoopPagerAdapter mWrapperAdapter;
     PagerAdapter mActualAdapter;
+    OnPageChangeListenerWrapper mWrapperOnPageChangeListener;
+    OnPageChangeListener mActualOnPageChangeListener;
     boolean mIsLoopScroll = true;
     Field mItems_Field;
     private Field mCurItem_Field;
@@ -135,6 +137,15 @@ public class LoopCompatibleViewPager extends ViewPager {
             super.setAdapter(mActualAdapter);
         }
     }
+
+    @Override
+    public void setOnPageChangeListener(OnPageChangeListener listener) {
+        mActualOnPageChangeListener = listener;
+        mWrapperOnPageChangeListener = new OnPageChangeListenerWrapper();
+        super.setOnPageChangeListener(mWrapperOnPageChangeListener);
+    }
+
+
 
     /**
      * Set the currently selected page. If the ViewPager has already been through its first
@@ -592,5 +603,41 @@ public class LoopCompatibleViewPager extends ViewPager {
 
     private int getClientWidth() {
         return getMeasuredWidth() - getPaddingLeft() - getPaddingRight();
+    }
+
+    private class OnPageChangeListenerWrapper implements OnPageChangeListener {
+
+        @Override
+        public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+            if(mActualOnPageChangeListener!=null) {
+                if (getWrapperAdapter() == null) {
+                    mActualOnPageChangeListener.onPageScrolled(position, positionOffset, positionOffsetPixels);
+                } else {
+                    mActualOnPageChangeListener.onPageScrolled(position % getWrapperAdapter().getRealCount(), positionOffset, positionOffsetPixels);
+                }
+            }
+        }
+
+        @Override
+        public void onPageSelected(int position) {
+            if(mActualOnPageChangeListener!=null) {
+                if (getWrapperAdapter() == null) {
+                    mActualOnPageChangeListener.onPageSelected(position);
+                } else {
+                    mActualOnPageChangeListener.onPageSelected(position % getWrapperAdapter().getRealCount());
+                }
+            }
+        }
+
+        @Override
+        public void onPageScrollStateChanged(int state) {
+            if(mActualOnPageChangeListener!=null){
+                if (getWrapperAdapter() == null) {
+                    mActualOnPageChangeListener.onPageScrollStateChanged(state);
+                } else {
+                    mActualOnPageChangeListener.onPageScrollStateChanged(state);
+                }
+            }
+        }
     }
 }
