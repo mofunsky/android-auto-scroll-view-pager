@@ -153,7 +153,7 @@ public class AutoScrollViewPager extends LoopCompatibleViewPager {
      * scroll only once
      */
     public void scrollOnce() {
-        PagerAdapter adapter = getWrapperAdapter();
+        PagerAdapter adapter = getWrapperAdapter()==null?getAdapter():getWrapperAdapter();
         int currentItem = getInnerCurrentItem();
         int totalCount;
         if (adapter == null || (totalCount = adapter.getCount()) <= 1) {
@@ -200,7 +200,7 @@ public class AutoScrollViewPager extends LoopCompatibleViewPager {
                 downX = touchX;
             }
             int currentItem = getInnerCurrentItem();
-            PagerAdapter adapter = getWrapperAdapter();
+            PagerAdapter adapter = getWrapperAdapter()==null?getAdapter():getWrapperAdapter();
             int pageCount = adapter == null ? 0 : adapter.getCount();
             /**
              * current index is first one and slide to right or current index is last one and slide to left.<br/>

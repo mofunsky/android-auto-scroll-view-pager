@@ -33,6 +33,8 @@ public class LoopCompatibleViewPager extends ViewPager {
     private static final int DRAW_ORDER_DEFAULT = 0;
     private static final ViewPositionComparator sPositionComparator = new ViewPositionComparator();
     InfiniteLoopPagerAdapter mWrapperAdapter;
+    PagerAdapter mActualAdapter;
+    boolean mIsLoopScroll = true;
     Field mItems_Field;
     private Field mCurItem_Field;
     private Field mPopulatePending_Field;
@@ -109,7 +111,7 @@ public class LoopCompatibleViewPager extends ViewPager {
      * @return The currently registered PagerAdapter
      */
     public PagerAdapter getAdapter() {
-        return mWrapperAdapter.getOriginalPageAdapter();
+        return mActualAdapter;
     }
 
     protected InfiniteLoopPagerAdapter getWrapperAdapter(){
@@ -122,9 +124,16 @@ public class LoopCompatibleViewPager extends ViewPager {
      * @param adapter Adapter to use
      */
     public void setAdapter(PagerAdapter adapter) {
-        mWrapperAdapter = new InfiniteLoopPagerAdapter(adapter);
-        super.setAdapter(mWrapperAdapter);
-        setCurrentItem(0);
+        if(isLoopScroll()) {
+            mActualAdapter = adapter;
+            mWrapperAdapter = new InfiniteLoopPagerAdapter(adapter);
+            super.setAdapter(mWrapperAdapter);
+            setCurrentItem(0);
+        }else {
+            mActualAdapter = adapter;
+            mWrapperAdapter = null;
+            super.setAdapter(mActualAdapter);
+        }
     }
 
     /**
@@ -135,8 +144,10 @@ public class LoopCompatibleViewPager extends ViewPager {
      * @param item Item index to select
      */
     public void setCurrentItem(int item) {
-        if (item < mWrapperAdapter.getRealCount()) {
-            item = mWrapperAdapter.getCount() / 2 - (mWrapperAdapter.getCount() / 2) % mWrapperAdapter.getRealCount() + item;
+        if(getWrapperAdapter()!=null) {
+            if (item < getWrapperAdapter().getRealCount()) {
+                item = getWrapperAdapter().getCount() / 2 - (getWrapperAdapter().getCount() / 2) % getWrapperAdapter().getRealCount() + item;
+            }
         }
         super.setCurrentItem(item);
     }
@@ -148,19 +159,43 @@ public class LoopCompatibleViewPager extends ViewPager {
      * @param smoothScroll True to smoothly scroll to the new item, false to transition immediately
      */
     public void setCurrentItem(int item, boolean smoothScroll) {
-        if (item < mWrapperAdapter.getRealCount()) {
-            item = mWrapperAdapter.getCount() / 2 - (mWrapperAdapter.getCount() / 2) % mWrapperAdapter.getRealCount() + item;
+        if(getWrapperAdapter()!=null) {
+            if (item < getWrapperAdapter().getRealCount()) {
+                item = getWrapperAdapter().getCount() / 2 - (getWrapperAdapter().getCount() / 2) % getWrapperAdapter().getRealCount() + item;
+            }
         }
         super.setCurrentItem(item, smoothScroll);
     }
 
     @Override
     public int getCurrentItem() {
-        return super.getCurrentItem()%mWrapperAdapter.getRealCount();
+        if(getWrapperAdapter()!=null) {
+            return super.getCurrentItem() % getWrapperAdapter().getRealCount();
+        }else {
+            return super.getCurrentItem();
+        }
+    }
+
+    public void setLoopScroll(boolean loopScroll){
+        if(mIsLoopScroll==loopScroll){
+            return;
+        }
+        mIsLoopScroll = loopScroll;
+        if(getWrapperAdapter()!=null) {
+            setAdapter(getWrapperAdapter().getOriginalPageAdapter());
+        }
+    }
+
+    public boolean isLoopScroll(){
+        return mIsLoopScroll;
     }
 
     @Override
     void populate(int newCurrentItem) {
+        if(getWrapperAdapter()==null){
+            super.populate(newCurrentItem);
+            return;
+        }
         ItemInfo oldCurInfo = null;
         int focusDirection = View.FOCUS_FORWARD;
         if (getInnerCurrentItem() != newCurrentItem) {
@@ -169,7 +204,7 @@ public class LoopCompatibleViewPager extends ViewPager {
             setInnerCurrentItem(newCurrentItem);
         }
 
-        if (mWrapperAdapter == null) {
+        if (getWrapperAdapter() == null) {
             sortChildDrawingOrder();
             return;
         }
@@ -190,11 +225,11 @@ public class LoopCompatibleViewPager extends ViewPager {
             return;
         }
 
-        mWrapperAdapter.startUpdate(this);
+        getWrapperAdapter().startUpdate(this);
 
         final int pageLimit = getOffscreenPageLimit();
         final int startPos = Math.max(0, getInnerCurrentItem() - pageLimit);
-        final int N = mWrapperAdapter.getCount();
+        final int N = getWrapperAdapter().getCount();
         final int endPos = Math.min(N - 1, getInnerCurrentItem() + pageLimit);
 
         if (N != getInnerExpectedAdapterCount()) {
@@ -209,7 +244,7 @@ public class LoopCompatibleViewPager extends ViewPager {
                     " Expected adapter item count: " + getInnerExpectedAdapterCount() + ", found: " + N +
                     " Pager id: " + resName +
                     " Pager class: " + getClass() +
-                    " Problematic adapter: " + mWrapperAdapter.getClass());
+                    " Problematic adapter: " + getWrapperAdapter().getClass());
         }
 
         // Locate the currently focused item or add it if needed.
@@ -237,7 +272,7 @@ public class LoopCompatibleViewPager extends ViewPager {
             final int clientWidth = getClientWidth();
             final float leftWidthNeeded = clientWidth <= 0 ? 0 :
                     2.f - curItem.widthFactor + (float) getPaddingLeft() / (float) clientWidth;
-            int checkStart = Math.max(0,getInnerCurrentItem()-mWrapperAdapter.getRealCount());//reduce execute times,when loop viewpager is available
+            int checkStart = Math.max(0,getInnerCurrentItem()-getWrapperAdapter().getRealCount());//reduce execute times,when loop viewpager is available
             for (int pos = getInnerCurrentItem() - 1; pos >= checkStart; pos--) {
                 if (extraWidthLeft >= leftWidthNeeded && pos < startPos) {
                     if (ii == null) {
@@ -245,7 +280,7 @@ public class LoopCompatibleViewPager extends ViewPager {
                     }
                     if (pos == ii.position && !ii.scrolling) {
                         getInnerItems().remove(itemIndex);
-                        mWrapperAdapter.destroyItem(this, pos, ii.object);
+                        getWrapperAdapter().destroyItem(this, pos, ii.object);
 
                         itemIndex--;
                         curIndex--;
@@ -269,7 +304,7 @@ public class LoopCompatibleViewPager extends ViewPager {
                 ii = itemIndex < getInnerItems().size() ? getInnerItems().get(itemIndex) : null;
                 final float rightWidthNeeded = clientWidth <= 0 ? 0 :
                         (float) getPaddingRight() / (float) clientWidth + 2.f;
-                int checkEnd = Math.min(N,getInnerCurrentItem()+mWrapperAdapter.getRealCount());//reduce execute times,when loop viewpager is available
+                int checkEnd = Math.min(N,getInnerCurrentItem()+getWrapperAdapter().getRealCount());//reduce execute times,when loop viewpager is available
                 for (int pos = getInnerCurrentItem() + 1; pos < checkEnd; pos++) {
                     if (extraWidthRight >= rightWidthNeeded && pos > endPos) {
                         if (ii == null) {
@@ -277,7 +312,7 @@ public class LoopCompatibleViewPager extends ViewPager {
                         }
                         if (pos == ii.position && !ii.scrolling) {
                             getInnerItems().remove(itemIndex);
-                            mWrapperAdapter.destroyItem(this, pos, ii.object);
+                            getWrapperAdapter().destroyItem(this, pos, ii.object);
                             ii = itemIndex < getInnerItems().size() ? getInnerItems().get(itemIndex) : null;
                         }
                     } else if (ii != null && pos == ii.position) {
@@ -297,9 +332,9 @@ public class LoopCompatibleViewPager extends ViewPager {
         }
 
 
-        mWrapperAdapter.setPrimaryItem(this, getInnerCurrentItem(), curItem != null ? curItem.object : null);
+        getWrapperAdapter().setPrimaryItem(this, getInnerCurrentItem(), curItem != null ? curItem.object : null);
 
-        mWrapperAdapter.finishUpdate(this);
+        getWrapperAdapter().finishUpdate(this);
 
         // Check width measurement of current pages and drawing sort order.
         // Update LayoutParams as needed.
@@ -353,7 +388,7 @@ public class LoopCompatibleViewPager extends ViewPager {
     }
 
     private void calculatePageOffsets(ItemInfo curItem, int curIndex, ItemInfo oldCurInfo) {
-        final int N = mWrapperAdapter.getCount();
+        final int N = getWrapperAdapter().getCount();
         final int width = getClientWidth();
         final float marginOffset = width > 0 ? (float) getInnerPageMargin() / width : 0;
         // Fix up offsets for later layout.
@@ -374,7 +409,7 @@ public class LoopCompatibleViewPager extends ViewPager {
                     while (pos < ii.position) {
                         // We don't have an item populated for this,
                         // ask the adapter for an offset.
-                        offset += mWrapperAdapter.getPageWidth(pos) + marginOffset;
+                        offset += getWrapperAdapter().getPageWidth(pos) + marginOffset;
                         pos++;
                     }
                     ii.offset = offset;
@@ -394,7 +429,7 @@ public class LoopCompatibleViewPager extends ViewPager {
                     while (pos > ii.position) {
                         // We don't have an item populated for this,
                         // ask the adapter for an offset.
-                        offset -= mWrapperAdapter.getPageWidth(pos) + marginOffset;
+                        offset -= getWrapperAdapter().getPageWidth(pos) + marginOffset;
                         pos--;
                     }
                     offset -= ii.widthFactor + marginOffset;
@@ -422,7 +457,7 @@ public class LoopCompatibleViewPager extends ViewPager {
         for (int i = curIndex - 1; i >= 0; i--, pos--) {
             final ItemInfo ii = getInnerItems().get(i);
             while (pos > ii.position) {
-                offset -= mWrapperAdapter.getPageWidth(pos--) + marginOffset;
+                offset -= getWrapperAdapter().getPageWidth(pos--) + marginOffset;
             }
             offset -= ii.widthFactor + marginOffset;
             ii.offset = offset;
@@ -440,7 +475,7 @@ public class LoopCompatibleViewPager extends ViewPager {
         for (int i = curIndex + 1; i < itemCount; i++, pos++) {
             final ItemInfo ii = getInnerItems().get(i);
             while (pos < ii.position) {
-                offset += mWrapperAdapter.getPageWidth(pos++) + marginOffset;
+                offset += getWrapperAdapter().getPageWidth(pos++) + marginOffset;
             }
             if (ii.position == N - 1) {
                 try {
