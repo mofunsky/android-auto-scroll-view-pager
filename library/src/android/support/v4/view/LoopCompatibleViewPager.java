@@ -120,6 +120,7 @@ public class LoopCompatibleViewPager extends ViewPager {
     public void setAdapter(PagerAdapter adapter) {
         mWrapperAdapter = new InfiniteLoopPagerAdapter(adapter);
         super.setAdapter(mWrapperAdapter);
+        setCurrentItem(0);
     }
 
     /**
@@ -227,7 +228,7 @@ public class LoopCompatibleViewPager extends ViewPager {
             final int clientWidth = getClientWidth();
             final float leftWidthNeeded = clientWidth <= 0 ? 0 :
                     2.f - curItem.widthFactor + (float) getPaddingLeft() / (float) clientWidth;
-            int checkStart = Math.max(0,getCurrentItem()-getOffscreenPageLimit());//reduce execute times,when loop viewpager is available
+            int checkStart = Math.max(0,getCurrentItem()-mWrapperAdapter.getRealCount());//reduce execute times,when loop viewpager is available
             for (int pos = getCurrentItem() - 1; pos >= checkStart; pos--) {
                 if (extraWidthLeft >= leftWidthNeeded && pos < startPos) {
                     if (ii == null) {
@@ -259,7 +260,7 @@ public class LoopCompatibleViewPager extends ViewPager {
                 ii = itemIndex < getmItems().size() ? getmItems().get(itemIndex) : null;
                 final float rightWidthNeeded = clientWidth <= 0 ? 0 :
                         (float) getPaddingRight() / (float) clientWidth + 2.f;
-                int checkEnd = Math.min(N,getCurrentItem()+getOffscreenPageLimit());//reduce execute times,when loop viewpager is available
+                int checkEnd = Math.min(N,getCurrentItem()+mWrapperAdapter.getRealCount());//reduce execute times,when loop viewpager is available
                 for (int pos = getCurrentItem() + 1; pos < checkEnd; pos++) {
                     if (extraWidthRight >= rightWidthNeeded && pos > endPos) {
                         if (ii == null) {
