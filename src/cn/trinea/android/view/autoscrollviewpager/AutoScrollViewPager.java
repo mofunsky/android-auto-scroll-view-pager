@@ -31,7 +31,7 @@ import android.view.animation.Interpolator;
  * 
  * @author <a href="http://www.trinea.cn" target="_blank">Trinea</a> 2013-12-30
  */
-public class AutoScrollViewPager extends ViewPager {
+public class AutoScrollViewPager extends LoopCompatibleViewPager {
 
     public static final int        DEFAULT_INTERVAL            = 1500;
 
