@@ -5,6 +5,7 @@ import java.lang.reflect.Field;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Message;
+import android.support.v4.view.LoopCompatibleViewPager;
 import android.support.v4.view.MotionEventCompat;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;

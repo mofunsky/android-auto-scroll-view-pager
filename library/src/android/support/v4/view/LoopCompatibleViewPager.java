@@ -24,7 +24,6 @@ import android.view.View;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 
 /**
  * override ViewPager's 'populate' medthod to prevent main thread from blocking
