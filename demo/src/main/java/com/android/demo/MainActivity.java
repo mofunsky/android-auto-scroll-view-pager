@@ -37,6 +37,7 @@ public class MainActivity extends ActionBarActivity {
 
         mViewPager.setAdapter(mViewPagerAdapter);
         mViewPager.setInterval(1000);
+//        mViewPager.setLoopScroll(false);
         mViewPager.startAutoScroll();
     }
     public View makeView(int rid) {
@@ -63,6 +64,7 @@ public class MainActivity extends ActionBarActivity {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            initViewPager();
             return true;
         }
 

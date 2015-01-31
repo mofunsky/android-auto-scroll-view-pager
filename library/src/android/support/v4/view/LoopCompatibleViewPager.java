@@ -130,6 +130,8 @@ public class LoopCompatibleViewPager extends ViewPager {
             mActualAdapter = adapter;
             mWrapperAdapter = new InfiniteLoopPagerAdapter(adapter);
             super.setAdapter(mWrapperAdapter);
+            getInnerItems().clear();
+            setInnerCurrentItem(mWrapperAdapter.getCount() / 2 - (mWrapperAdapter.getCount() / 2) % mWrapperAdapter.getRealCount() );
             setCurrentItem(0);
         }else {
             mActualAdapter = adapter;
